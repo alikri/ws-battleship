@@ -59,14 +59,7 @@ export class GameServer {
     const player = this.players.get(ws);
 
     if (room && room.isFull()) {
-      ws.send(
-        JSON.stringify({
-          type: 'error',
-          data: JSON.stringify({ error: 'Room is full.' }),
-          id: 0,
-        }),
-      );
-      return;
+      console.error('No available rooms!')
     }
 
     if (player && room) {
