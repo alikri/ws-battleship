@@ -51,6 +51,9 @@ export class GameServer {
         const roomId = JSON.parse(messageObj.data).indexRoom;
         this.addPlayerToRoom(ws, roomId);
         break;
+      case 'create_game':
+        this.createRoom(ws);
+        break;
     }
   }
 
@@ -65,7 +68,6 @@ export class GameServer {
     if (player && room) {
       room.addPlayer(player);
     }
-
     if (room && room.isFull()) {
       this.updateAvailableRooms();
     }
@@ -121,6 +123,11 @@ export class GameServer {
     }
 
     const newRoom = new GameRoom(this.nextRoomId++);
+
+    newRoom.on('game_created', () => {
+      this.notifyPlayersGameCreated(newRoom);
+    });
+
     newRoom.addPlayer(player);
     this.gameRooms.set(newRoom.roomId, newRoom);
     this.updateAvailableRooms();
@@ -132,5 +139,24 @@ export class GameServer {
     } else {
       return 2;
     }
+  }
+
+  private notifyPlayersGameCreated(room: GameRoom) {
+    room.players.forEach((player) => {
+      const ws = player.ws;
+      const responseData = {
+        idGame: room.roomId,
+        idPlayer: player.index,
+      };
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(
+          JSON.stringify({
+            type: 'create_game',
+            data: JSON.stringify(responseData),
+            id: 0,
+          }),
+        );
+      }
+    });
   }
 }

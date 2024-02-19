@@ -10,7 +10,6 @@ export class Player {
     this.password = password;
     this.name = name;
     this.index = index;
-    this.ws = ws; 
+    this.ws = ws;
   }
-
 }
