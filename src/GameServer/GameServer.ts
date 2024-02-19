@@ -49,17 +49,17 @@ export class GameServer {
         break;
       case 'add_user_to_room':
         const roomId = JSON.parse(messageObj.data).indexRoom;
-        this.addUserToRoom(ws, roomId);
+        this.addPlayerToRoom(ws, roomId);
         break;
     }
   }
 
-  private addUserToRoom(ws: WebSocket, roomId: number) {
+  private addPlayerToRoom(ws: WebSocket, roomId: number) {
     const room = this.gameRooms.get(roomId);
     const player = this.players.get(ws);
 
     if (room && room.isFull()) {
-      console.error('No available rooms!')
+      console.error('No available rooms!');
     }
 
     if (player && room) {
@@ -78,7 +78,7 @@ export class GameServer {
         roomId: room.roomId,
         roomUsers: room.players.map((player) => ({
           name: player.name,
-          index: player.index, 
+          index: player.index,
         })),
       }));
 
@@ -126,7 +126,6 @@ export class GameServer {
     this.updateAvailableRooms();
   }
 
-
   private createPlayerIndex() {
     if (this.players.size === 0) {
       return 1;
@@ -134,7 +133,4 @@ export class GameServer {
       return 2;
     }
   }
-
 }
-
-
