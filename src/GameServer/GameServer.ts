@@ -3,6 +3,7 @@ import * as http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { Player } from '../Player/Player';
 import { GameRoom } from '../GameRoom/GameRoom';
+import { Ship } from 'src/Ship/Ship';
 
 export class GameServer {
   private wss: WebSocketServer;
@@ -54,6 +55,20 @@ export class GameServer {
       case 'create_game':
         this.createRoom(ws);
         break;
+      case 'add_ships':
+        const { gameId, ships, indexPlayer } = JSON.parse(messageObj.data);
+        this.addShipsToGame(gameId, ships, indexPlayer);
+        break;
+        break;
+    }
+  }
+
+  private addShipsToGame(gameId: number, shipsData: Ship[], indexPlayer: number) {
+    const gameRoom = this.gameRooms.get(gameId);
+    if (gameRoom) {
+      gameRoom.handleShipSubmission(indexPlayer, shipsData);
+    } else {
+      console.error('Game room not found for gameId:', gameId);
     }
   }
 
@@ -128,6 +143,10 @@ export class GameServer {
       this.notifyPlayersGameCreated(newRoom);
     });
 
+    newRoom.on('start_game', () => {
+      this.notifyPlayersGameIsStarting(newRoom);
+    });
+
     newRoom.addPlayer(player);
     this.gameRooms.set(newRoom.roomId, newRoom);
     this.updateAvailableRooms();
@@ -135,9 +154,9 @@ export class GameServer {
 
   private createPlayerIndex() {
     if (this.players.size === 0) {
-      return 1;
+      return 0;
     } else {
-      return 2;
+      return 1;
     }
   }
 
@@ -156,6 +175,24 @@ export class GameServer {
             id: 0,
           }),
         );
+      }
+    });
+  }
+
+  private notifyPlayersGameIsStarting(room: GameRoom) {
+    room.players.forEach((player) => {
+      const shipsData = room.getShipsDataForPlayer(player.index);
+      const response = JSON.stringify({
+        type: 'start_game',
+        data: {
+          ships: shipsData,
+          currentPlayerIndex: player.index,
+        },
+        id: 0,
+      });
+      const ws = player.ws;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(response);
       }
     });
   }
