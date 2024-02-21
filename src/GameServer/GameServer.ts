@@ -71,7 +71,9 @@ export class GameServer {
       return;
     }
 
-    gameRoom.on('attack_processed', (feedback) => {
+    const feedback = gameRoom.handleAttack(x, y, indexPlayer);
+
+    if (feedback) {
       gameRoom.players.forEach((player) => {
         player.ws.send(
           JSON.stringify({
@@ -81,18 +83,15 @@ export class GameServer {
           }),
         );
 
-        const currentPlayer = { currentPlayer: gameRoom.currentPlayerIndex };
         player.ws.send(
           JSON.stringify({
             type: 'turn',
-            data: JSON.stringify(currentPlayer),
+            data: JSON.stringify(feedback.currentPlayer),
             id: 0,
           }),
         );
       });
-    });
-
-    gameRoom.handleAttack(x, y, indexPlayer);
+    }
   }
 
   private addShipsToGame(gameId: string, shipsData: Ship[], indexPlayer: number) {

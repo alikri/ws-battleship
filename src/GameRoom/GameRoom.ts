@@ -29,8 +29,9 @@ export class GameRoom extends EventEmitter {
       this.players.push(player);
       this.gameBoards.set(player.index, new GameBoard());
       if (this.players.length === 2) {
-        this.currentPlayerIndex = player.index;
         this.createGame();
+      } else if (this.players.length === 1) {
+        this.currentPlayerIndex = player.index;
       }
       return true;
     }
@@ -91,17 +92,17 @@ export class GameRoom extends EventEmitter {
     }));
   }
 
-  handleAttack(x: number, y: number, attacker: number) {
-    if (this.currentPlayerIndex !== attacker) {
+  handleAttack(x: number, y: number, attackerIndex: number) {
+    if (this.currentPlayerIndex !== attackerIndex) {
       console.log(this.currentPlayerIndex, 'current');
-      console.log(attacker, 'index that sent request');
+      console.log(attackerIndex, 'index that sent request');
       console.log("It's not the player's turn.");
       return;
     } else {
-      console.log('attacker = ' + attacker);
+      console.log('attacker = ' + attackerIndex);
     }
 
-    const opponentIndex = Array.from(this.gameBoards.keys()).find((key) => key !== attacker);
+    const opponentIndex = Array.from(this.gameBoards.keys()).find((key) => key !== attackerIndex);
     if (opponentIndex === undefined) {
       console.log("Opponent's game board not found.");
       return;
@@ -113,12 +114,14 @@ export class GameRoom extends EventEmitter {
       return;
     }
 
-    this.currentPlayerIndex = opponentIndex;
-
-    this.emit('attack_processed', {
+    const attackFeedback = {
       position: { x, y },
       status: result,
       currentPlayer: this.currentPlayerIndex,
-    });
+    };
+
+    this.currentPlayerIndex = opponentIndex;
+
+    return attackFeedback;
   }
 }
