@@ -2,26 +2,34 @@ import { EventEmitter } from 'events';
 import { Player } from '../Player/Player';
 import { GameBoard } from 'src/GameBoard/GameBoard';
 import { Ship } from 'src/Ship/Ship';
+import { generateRandomId } from 'src/utils/generateRandomId';
+
+export enum Type {
+  small = 'small',
+  medium = 'medium',
+  large = 'large',
+  huge = 'huge',
+}
 
 export class GameRoom extends EventEmitter {
   players: Player[] = [];
-  roomId: number;
+  roomId: string;
   gameStarted: boolean = false;
   gameCreated: boolean = false;
-  currentPlayerIndex: number = 0;
+  currentPlayerIndex: number;
   gameBoards: Map<number, GameBoard> = new Map();
 
-  constructor(roomId: number) {
+  constructor() {
     super();
-    this.roomId = roomId;
-    this.gameBoards.set(0, new GameBoard());
-    this.gameBoards.set(1, new GameBoard());
+    this.roomId = generateRandomId();
   }
 
   addPlayer(player: Player): boolean {
     if (this.players.length < 2) {
       this.players.push(player);
+      this.gameBoards.set(player.index, new GameBoard());
       if (this.players.length === 2) {
+        this.currentPlayerIndex = player.index;
         this.createGame();
       }
       return true;
@@ -42,7 +50,7 @@ export class GameRoom extends EventEmitter {
     const gameBoard = this.gameBoards.get(playerIndex);
 
     if (!gameBoard) {
-      console.error('Game board not found for playerIndex:', playerIndex);
+      console.log('Game board not found for playerIndex:', playerIndex);
       return;
     }
 
@@ -55,17 +63,21 @@ export class GameRoom extends EventEmitter {
 
     if (this.startGameWhenReady()) {
       this.gameStarted = true;
-      this.emit('start_game', this);
+      this.emit('game_started', this);
     }
   }
 
   private startGameWhenReady() {
     const result = Array.from(this.gameBoards.values()).every((board) => board.shipsSubmitted);
-    console.log(result, 'result');
     return result;
   }
 
-  getShipsDataForPlayer(playerIndex: number): Ship[] {
+  getShipsDataForPlayer(playerIndex: number): {
+    position: { x: number; y: number };
+    direction: boolean;
+    length: number;
+    type: Type;
+  }[] {
     const gameBoard = this.gameBoards.get(playerIndex);
     if (!gameBoard) {
       return [];
@@ -77,5 +89,36 @@ export class GameRoom extends EventEmitter {
       length: ship.length,
       type: ship.type,
     }));
+  }
+
+  handleAttack(x: number, y: number, attacker: number) {
+    if (this.currentPlayerIndex !== attacker) {
+      console.log(this.currentPlayerIndex, 'current');
+      console.log(attacker, 'index that sent request');
+      console.log("It's not the player's turn.");
+      return;
+    } else {
+      console.log('attacker = ' + attacker);
+    }
+
+    const opponentIndex = Array.from(this.gameBoards.keys()).find((key) => key !== attacker);
+    if (opponentIndex === undefined) {
+      console.log("Opponent's game board not found.");
+      return;
+    }
+
+    const result = this.gameBoards.get(opponentIndex)?.processAttack(x, y);
+    if (result === undefined) {
+      console.log('Failed to process attack.');
+      return;
+    }
+
+    this.currentPlayerIndex = opponentIndex;
+
+    this.emit('attack_processed', {
+      position: { x, y },
+      status: result,
+      currentPlayer: this.currentPlayerIndex,
+    });
   }
 }

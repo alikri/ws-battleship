@@ -8,12 +8,11 @@ import { Ship } from 'src/Ship/Ship';
 export class GameServer {
   private wss: WebSocketServer;
   private players: Map<WebSocket, Player>;
-  private gameRooms: Map<number, GameRoom>;
-  private nextRoomId: number = 1;
+  private gameRooms: Map<string, GameRoom>;
 
   constructor(port: number) {
     this.players = new Map<WebSocket, Player>();
-    this.gameRooms = new Map<number, GameRoom>();
+    this.gameRooms = new Map<string, GameRoom>();
     const server = http.createServer((_, res) => {
       res.writeHead(404);
       res.end();
@@ -52,18 +51,51 @@ export class GameServer {
         const roomId = JSON.parse(messageObj.data).indexRoom;
         this.addPlayerToRoom(ws, roomId);
         break;
-      case 'create_game':
-        this.createRoom(ws);
-        break;
-      case 'add_ships':
+      case 'add_ships': {
         const { gameId, ships, indexPlayer } = JSON.parse(messageObj.data);
         this.addShipsToGame(gameId, ships, indexPlayer);
         break;
+      }
+      case 'attack': {
+        const { gameId, x, y, indexPlayer } = JSON.parse(messageObj.data);
+        this.handleAttackMessage(gameId, x, y, indexPlayer);
         break;
+      }
     }
   }
 
-  private addShipsToGame(gameId: number, shipsData: Ship[], indexPlayer: number) {
+  private handleAttackMessage(gameId: string, x: number, y: number, indexPlayer: number) {
+    const gameRoom = this.gameRooms.get(gameId);
+    if (!gameRoom) {
+      console.log(`Game room not found for gameId: ${gameId}`);
+      return;
+    }
+
+    gameRoom.on('attack_processed', (feedback) => {
+      gameRoom.players.forEach((player) => {
+        player.ws.send(
+          JSON.stringify({
+            type: 'attack',
+            data: JSON.stringify(feedback),
+            id: 0,
+          }),
+        );
+
+        const currentPlayer = { currentPlayer: gameRoom.currentPlayerIndex };
+        player.ws.send(
+          JSON.stringify({
+            type: 'turn',
+            data: JSON.stringify(currentPlayer),
+            id: 0,
+          }),
+        );
+      });
+    });
+
+    gameRoom.handleAttack(x, y, indexPlayer);
+  }
+
+  private addShipsToGame(gameId: string, shipsData: Ship[], indexPlayer: number) {
     const gameRoom = this.gameRooms.get(gameId);
     if (gameRoom) {
       gameRoom.handleShipSubmission(indexPlayer, shipsData);
@@ -72,13 +104,9 @@ export class GameServer {
     }
   }
 
-  private addPlayerToRoom(ws: WebSocket, roomId: number) {
+  private addPlayerToRoom(ws: WebSocket, roomId: string) {
     const room = this.gameRooms.get(roomId);
     const player = this.players.get(ws);
-
-    if (room && room.isFull()) {
-      console.error('No available rooms!');
-    }
 
     if (player && room) {
       room.addPlayer(player);
@@ -111,12 +139,13 @@ export class GameServer {
   }
 
   private registerPlayer(ws: WebSocket, data: { name: string; password: string }) {
-    const player = new Player(data.name, data.password, ws, this.createPlayerIndex());
+    const playerIndex = this.players.size;
+    const player = new Player(data.name, data.password, ws, playerIndex);
     this.players.set(ws, player);
 
     const responseData = {
       name: data.name,
-      index: this.players.size - 1,
+      index: player.index,
       error: false,
       errorText: '',
     };
@@ -137,27 +166,19 @@ export class GameServer {
       return;
     }
 
-    const newRoom = new GameRoom(this.nextRoomId++);
+    const newRoom = new GameRoom();
 
     newRoom.on('game_created', () => {
       this.notifyPlayersGameCreated(newRoom);
     });
 
-    newRoom.on('start_game', () => {
+    newRoom.on('game_started', () => {
       this.notifyPlayersGameIsStarting(newRoom);
     });
 
     newRoom.addPlayer(player);
     this.gameRooms.set(newRoom.roomId, newRoom);
     this.updateAvailableRooms();
-  }
-
-  private createPlayerIndex() {
-    if (this.players.size === 0) {
-      return 0;
-    } else {
-      return 1;
-    }
   }
 
   private notifyPlayersGameCreated(room: GameRoom) {
@@ -194,6 +215,16 @@ export class GameServer {
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(response);
       }
+
+      const currentPlayer = { currentPlayer: room.currentPlayerIndex };
+
+      player.ws.send(
+        JSON.stringify({
+          type: 'turn',
+          data: JSON.stringify(currentPlayer),
+          id: 0,
+        }),
+      );
     });
   }
 }
