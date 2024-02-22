@@ -53,67 +53,15 @@ export class GameServer {
         break;
       case 'add_ships': {
         const { gameId, ships, indexPlayer } = JSON.parse(messageObj.data);
-        this.addShipsToGame(gameId, ships, indexPlayer);
+        this.addShips(gameId, ships, indexPlayer);
         break;
       }
       case 'attack': {
         const { gameId, x, y, indexPlayer } = JSON.parse(messageObj.data);
-        this.handleAttackMessage(gameId, x, y, indexPlayer);
+        this.passAttack(gameId, x, y, indexPlayer);
         break;
       }
     }
-  }
-
-  private handleAttackMessage(gameId: string, x: number, y: number, indexPlayer: number) {
-    const gameRoom = this.gameRooms.get(gameId);
-    if (!gameRoom) {
-      console.log(`Game room not found for gameId: ${gameId}`);
-      return;
-    }
-
-    const feedback = gameRoom.handleAttack(x, y, indexPlayer);
-
-    if (feedback) {
-      gameRoom.players.forEach((player) => {
-        player.ws.send(
-          JSON.stringify({
-            type: 'attack',
-            data: JSON.stringify(feedback),
-            id: 0,
-          }),
-        );
-
-        player.ws.send(
-          JSON.stringify({
-            type: 'turn',
-            data: JSON.stringify(feedback.currentPlayer),
-            id: 0,
-          }),
-        );
-      });
-    }
-  }
-
-  private updateAvailableRooms() {
-    const roomsData = Array.from(this.gameRooms.values())
-      .filter((room) => !room.isFull())
-      .map((room) => ({
-        roomId: room.roomId,
-        roomUsers: room.players.map((player) => ({
-          name: player.name,
-          index: player.index,
-        })),
-      }));
-
-    this.wss.clients.forEach((client) => {
-      client.send(
-        JSON.stringify({
-          type: 'update_room',
-          data: JSON.stringify(roomsData),
-          id: 0,
-        }),
-      );
-    });
   }
 
   private registerPlayer(ws: WebSocket, data: { name: string; password: string }) {
@@ -166,10 +114,32 @@ export class GameServer {
     }
   }
 
-  private addShipsToGame(gameId: string, shipsData: Ship[], indexPlayer: number) {
+  private updateAvailableRooms() {
+    const roomsData = Array.from(this.gameRooms.values())
+      .filter((room) => !room.isFull())
+      .map((room) => ({
+        roomId: room.roomId,
+        roomUsers: room.players.map((player) => ({
+          name: player.name,
+          index: player.index,
+        })),
+      }));
+
+    this.wss.clients.forEach((client) => {
+      client.send(
+        JSON.stringify({
+          type: 'update_room',
+          data: JSON.stringify(roomsData),
+          id: 0,
+        }),
+      );
+    });
+  }
+
+  private addShips(gameId: string, shipsData: Ship[], indexPlayer: number) {
     const gameRoom = this.gameRooms.get(gameId);
     if (gameRoom) {
-      gameRoom.handleShipSubmission(indexPlayer, shipsData);
+      gameRoom.handleShipsSubmission(indexPlayer, shipsData);
       if (gameRoom.gameStarted) {
         this.notifyPlayersGameStarted(gameRoom);
       }
@@ -223,5 +193,35 @@ export class GameServer {
         }),
       );
     });
+  }
+
+  private passAttack(gameId: string, x: number, y: number, indexPlayer: number) {
+    const gameRoom = this.gameRooms.get(gameId);
+    if (!gameRoom) {
+      console.log(`Game room not found for gameId: ${gameId}`);
+      return;
+    }
+
+    const feedback = gameRoom.handleAttack(x, y, indexPlayer);
+
+    if (feedback) {
+      gameRoom.players.forEach((player) => {
+        player.ws.send(
+          JSON.stringify({
+            type: 'attack',
+            data: JSON.stringify(feedback),
+            id: 0,
+          }),
+        );
+
+        player.ws.send(
+          JSON.stringify({
+            type: 'turn',
+            data: JSON.stringify(feedback.currentPlayer),
+            id: 0,
+          }),
+        );
+      });
+    }
   }
 }

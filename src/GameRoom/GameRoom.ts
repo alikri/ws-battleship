@@ -40,7 +40,7 @@ export class GameRoom {
     return this.players.length === 2;
   }
 
-  handleShipSubmission(playerIndex: number, shipsData: Ship[]) {
+  handleShipsSubmission(playerIndex: number, shipsData: Ship[]) {
     const gameBoard = this.gameBoards.get(playerIndex);
 
     if (!gameBoard) {
