@@ -94,27 +94,6 @@ export class GameServer {
     }
   }
 
-  private addShipsToGame(gameId: string, shipsData: Ship[], indexPlayer: number) {
-    const gameRoom = this.gameRooms.get(gameId);
-    if (gameRoom) {
-      gameRoom.handleShipSubmission(indexPlayer, shipsData);
-    } else {
-      console.error('Game room not found for gameId:', gameId);
-    }
-  }
-
-  private addPlayerToRoom(ws: WebSocket, roomId: string) {
-    const room = this.gameRooms.get(roomId);
-    const player = this.players.get(ws);
-
-    if (player && room) {
-      room.addPlayer(player);
-    }
-    if (room && room.isFull()) {
-      this.updateAvailableRooms();
-    }
-  }
-
   private updateAvailableRooms() {
     const roomsData = Array.from(this.gameRooms.values())
       .filter((room) => !room.isFull())
@@ -167,17 +146,36 @@ export class GameServer {
 
     const newRoom = new GameRoom();
 
-    newRoom.on('game_created', () => {
-      this.notifyPlayersGameCreated(newRoom);
-    });
-
-    newRoom.on('game_started', () => {
-      this.notifyPlayersGameIsStarting(newRoom);
-    });
-
     newRoom.addPlayer(player);
     this.gameRooms.set(newRoom.roomId, newRoom);
     this.updateAvailableRooms();
+  }
+
+  private addPlayerToRoom(ws: WebSocket, roomId: string) {
+    const room = this.gameRooms.get(roomId);
+    const player = this.players.get(ws);
+
+    if (player && room) {
+      room.addPlayer(player);
+      if (room.gameCreated) {
+        this.notifyPlayersGameCreated(room);
+      }
+    }
+    if (room && room.isFull()) {
+      this.updateAvailableRooms();
+    }
+  }
+
+  private addShipsToGame(gameId: string, shipsData: Ship[], indexPlayer: number) {
+    const gameRoom = this.gameRooms.get(gameId);
+    if (gameRoom) {
+      gameRoom.handleShipSubmission(indexPlayer, shipsData);
+      if (gameRoom.gameStarted) {
+        this.notifyPlayersGameStarted(gameRoom);
+      }
+    } else {
+      console.error('Game room not found for gameId:', gameId);
+    }
   }
 
   private notifyPlayersGameCreated(room: GameRoom) {
@@ -199,7 +197,7 @@ export class GameServer {
     });
   }
 
-  private notifyPlayersGameIsStarting(room: GameRoom) {
+  private notifyPlayersGameStarted(room: GameRoom) {
     room.players.forEach((player) => {
       const shipsData = room.getShipsDataForPlayer(player.index);
       const response = JSON.stringify({

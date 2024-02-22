@@ -1,4 +1,3 @@
-import { EventEmitter } from 'events';
 import { Player } from '../Player/Player';
 import { GameBoard } from 'src/GameBoard/GameBoard';
 import { Ship } from 'src/Ship/Ship';
@@ -11,7 +10,7 @@ export enum Type {
   huge = 'huge',
 }
 
-export class GameRoom extends EventEmitter {
+export class GameRoom {
   players: Player[] = [];
   roomId: string;
   gameStarted: boolean = false;
@@ -20,7 +19,6 @@ export class GameRoom extends EventEmitter {
   gameBoards: Map<number, GameBoard> = new Map();
 
   constructor() {
-    super();
     this.roomId = generateRandomId();
   }
 
@@ -29,7 +27,7 @@ export class GameRoom extends EventEmitter {
       this.players.push(player);
       this.gameBoards.set(player.index, new GameBoard());
       if (this.players.length === 2) {
-        this.createGame();
+        this.gameCreated = true;
       } else if (this.players.length === 1) {
         this.currentPlayerIndex = player.index;
       }
@@ -40,11 +38,6 @@ export class GameRoom extends EventEmitter {
 
   isFull(): boolean {
     return this.players.length === 2;
-  }
-
-  private createGame(): void {
-    this.gameCreated = true;
-    this.emit('game_created', this);
   }
 
   handleShipSubmission(playerIndex: number, shipsData: Ship[]) {
@@ -64,7 +57,6 @@ export class GameRoom extends EventEmitter {
 
     if (this.startGameWhenReady()) {
       this.gameStarted = true;
-      this.emit('game_started', this);
     }
   }
 
