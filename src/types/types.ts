@@ -11,7 +11,7 @@ export interface Position {
   y: number;
 }
 
-export interface Ship {
+export interface ShipData {
   position: Position;
   direction: boolean;
   length: number;

@@ -1,4 +1,4 @@
-import { Position, Ship, Users } from './types';
+import { Position, ShipData, Users } from './types';
 
 export interface RegistrationData {
   name: string;
@@ -23,7 +23,7 @@ export interface CreateGameData {
 }
 
 export interface StartGameData {
-  ships: Ship[];
+  ships: ShipData[];
   currentPlayerIndex: number;
 }
 

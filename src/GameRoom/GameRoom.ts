@@ -1,8 +1,9 @@
 import { Player } from '../Player/Player';
 import { GameBoard } from 'src/GameBoard/GameBoard';
 import { Ship } from 'src/Ship/Ship';
+import { ShipData } from 'src/types/types';
 import { generateRandomId } from 'src/utils/generateRandomId';
-import { Status, ShipType } from 'src/types/enums';
+import { Status } from 'src/types/enums';
 
 export class GameRoom {
   private currentPlayerIndex: number;
@@ -64,12 +65,7 @@ export class GameRoom {
     return result;
   }
 
-  getShipsDataForPlayer(playerIndex: number): {
-    position: { x: number; y: number };
-    direction: boolean;
-    length: number;
-    type: ShipType;
-  }[] {
+  getShipsDataForPlayer(playerIndex: number): ShipData[] {
     const gameBoard = this.gameBoards.get(playerIndex);
     if (!gameBoard) {
       return [];
@@ -85,8 +81,6 @@ export class GameRoom {
 
   handleAttack(x: number, y: number, attackerIndex: number) {
     if (this.currentPlayerIndex !== attackerIndex) {
-      console.log(this.currentPlayerIndex, 'current');
-      console.log(attackerIndex, 'index that sent request');
       console.log("It's not the player's turn.");
       return;
     }

@@ -1,15 +1,16 @@
 import { ShipType } from 'src/types/enums';
+import { Position } from 'src/types/types';
 
 export class Ship {
-  position: { x: number; y: number };
+  position: Position;
   direction: boolean;
   length: number;
   type: ShipType;
   hits: number;
-  occupiedCells: { x: number; y: number }[];
-  cellsAround: { x: number; y: number }[];
+  occupiedCells: Position[];
+  cellsAround: Position[];
 
-  constructor(position: { x: number; y: number }, direction: boolean, length: number, type: ShipType) {
+  constructor(position: Position, direction: boolean, length: number, type: ShipType) {
     this.position = position;
     this.direction = direction;
     this.length = length;
