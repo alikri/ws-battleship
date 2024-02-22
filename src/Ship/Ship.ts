@@ -1,4 +1,4 @@
-import { ShipType } from 'src/GameRoom/GameRoom';
+import { ShipType } from 'src/types/enums';
 
 export class Ship {
   position: { x: number; y: number };

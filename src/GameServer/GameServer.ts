@@ -4,7 +4,15 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { Player } from '../Player/Player';
 import { GameRoom } from '../GameRoom/GameRoom';
 import { Ship } from 'src/Ship/Ship';
-import { Status } from 'src/GameBoard/GameBoard';
+import { Status } from 'src/types/enums';
+import { sendWebSocketMessage } from 'src/utils/sendWebSocketMessage';
+import {
+  RegistrationData,
+  StartGameData,
+  PlayerTurnData,
+  FinishGameData,
+  AttackFeedbackData,
+} from 'src/types/responseDataTypes';
 
 export class GameServer {
   private wss: WebSocketServer;
@@ -77,13 +85,7 @@ export class GameServer {
       errorText: '',
     };
 
-    const message = {
-      type: 'reg',
-      data: JSON.stringify(responseData),
-      id: 0,
-    };
-
-    ws.send(JSON.stringify(message));
+    sendWebSocketMessage<RegistrationData>(ws, 'reg', responseData);
   }
 
   private createRoom(ws: WebSocket) {
@@ -171,28 +173,19 @@ export class GameServer {
   private notifyPlayersGameStarted(room: GameRoom) {
     room.players.forEach((player) => {
       const shipsData = room.getShipsDataForPlayer(player.index);
-      const response = JSON.stringify({
-        type: 'start_game',
-        data: {
-          ships: shipsData,
-          currentPlayerIndex: player.index,
-        },
-        id: 0,
-      });
+      const response = {
+        ships: shipsData,
+        currentPlayerIndex: player.index,
+      };
+
       const ws = player.ws;
       if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(response);
+        sendWebSocketMessage<StartGameData>(ws, 'start_game', response);
       }
 
       const currentPlayer = { currentPlayer: room.getCurrentPlayerIndex() };
 
-      player.ws.send(
-        JSON.stringify({
-          type: 'turn',
-          data: JSON.stringify(currentPlayer),
-          id: 0,
-        }),
-      );
+      sendWebSocketMessage<PlayerTurnData>(player.ws, 'turn', currentPlayer);
     });
   }
 
@@ -207,17 +200,11 @@ export class GameServer {
 
     if (attackFeedback) {
       gameRoom.players.forEach((player) => {
-        player.ws.send(
-          JSON.stringify({
-            type: 'attack',
-            data: JSON.stringify(attackFeedback.feedback),
-            id: 0,
-          }),
-        );
+        sendWebSocketMessage<AttackFeedbackData>(player.ws, 'attack', attackFeedback.feedback);
 
         if (attackFeedback.misses.length !== 0) {
           attackFeedback.misses.forEach((pos) => {
-            const feed = {
+            const response = {
               position: {
                 x: pos.x,
                 y: pos.y,
@@ -225,13 +212,7 @@ export class GameServer {
               status: Status.miss,
               currentPlayer: indexPlayer,
             };
-            player.ws.send(
-              JSON.stringify({
-                type: 'attack',
-                data: JSON.stringify(feed),
-                id: 0,
-              }),
-            );
+            sendWebSocketMessage<AttackFeedbackData>(player.ws, 'attack', response);
           });
         }
 
@@ -239,23 +220,11 @@ export class GameServer {
           const response = {
             winPlayer: indexPlayer,
           };
-          player.ws.send(
-            JSON.stringify({
-              type: 'finish',
-              data: JSON.stringify(response),
-              id: 0,
-            }),
-          );
+          sendWebSocketMessage<FinishGameData>(player.ws, 'finish', response);
         }
 
         const currentPlayer = { currentPlayer: gameRoom.getCurrentPlayerIndex() };
-        player.ws.send(
-          JSON.stringify({
-            type: 'turn',
-            data: JSON.stringify(currentPlayer),
-            id: 0,
-          }),
-        );
+        sendWebSocketMessage<PlayerTurnData>(player.ws, 'turn', currentPlayer);
       });
     }
   }

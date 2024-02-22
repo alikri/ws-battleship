@@ -1,14 +1,8 @@
 import { Player } from '../Player/Player';
-import { GameBoard, Status } from 'src/GameBoard/GameBoard';
+import { GameBoard } from 'src/GameBoard/GameBoard';
 import { Ship } from 'src/Ship/Ship';
 import { generateRandomId } from 'src/utils/generateRandomId';
-
-export enum ShipType {
-  small = 'small',
-  medium = 'medium',
-  large = 'large',
-  huge = 'huge',
-}
+import { Status, ShipType } from 'src/types/enums';
 
 export class GameRoom {
   private currentPlayerIndex: number;
@@ -95,8 +89,6 @@ export class GameRoom {
       console.log(attackerIndex, 'index that sent request');
       console.log("It's not the player's turn.");
       return;
-    } else {
-      console.log('attacker = ' + attackerIndex);
     }
 
     const opponentIndex = Array.from(this.gameBoards.keys()).find((key) => key !== attackerIndex);
@@ -123,12 +115,12 @@ export class GameRoom {
 
     if (attackResult === Status.killed) {
       const attackFeedback = {
-        misses: oponentBoard.cellsAroundForKilledShip,
         feedback: {
           position: { x, y },
           status: attackResult,
           currentPlayer: this.currentPlayerIndex,
         },
+        misses: oponentBoard.cellsAroundForKilledShip,
       };
       return attackFeedback;
     } else {

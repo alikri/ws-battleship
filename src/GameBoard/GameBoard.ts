@@ -1,11 +1,5 @@
 import { Ship } from 'src/Ship/Ship';
-
-export enum Status {
-  miss = 'miss',
-  shot = 'shot',
-  killed = 'killed',
-}
-
+import { Status } from 'src/types/enums';
 export class GameBoard {
   ships: Ship[] = [];
   shipsSubmitted: boolean = false;
