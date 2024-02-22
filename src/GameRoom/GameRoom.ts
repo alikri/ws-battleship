@@ -1,9 +1,9 @@
 import { Player } from '../Player/Player';
-import { GameBoard } from 'src/GameBoard/GameBoard';
+import { GameBoard, Status } from 'src/GameBoard/GameBoard';
 import { Ship } from 'src/Ship/Ship';
 import { generateRandomId } from 'src/utils/generateRandomId';
 
-export enum Type {
+export enum ShipType {
   small = 'small',
   medium = 'medium',
   large = 'large',
@@ -73,7 +73,7 @@ export class GameRoom {
     position: { x: number; y: number };
     direction: boolean;
     length: number;
-    type: Type;
+    type: ShipType;
   }[] {
     const gameBoard = this.gameBoards.get(playerIndex);
     if (!gameBoard) {
@@ -116,7 +116,9 @@ export class GameRoom {
       currentPlayer: this.currentPlayerIndex,
     };
 
-    this.currentPlayerIndex = opponentIndex;
+    if (result === Status.miss) {
+      this.currentPlayerIndex = opponentIndex;
+    }
 
     return attackFeedback;
   }

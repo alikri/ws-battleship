@@ -215,7 +215,6 @@ export class GameServer {
         );
 
         const currentPlayer = { currentPlayer: gameRoom.getCurrentPlayerIndex() };
-
         player.ws.send(
           JSON.stringify({
             type: 'turn',

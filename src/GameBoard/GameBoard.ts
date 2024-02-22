@@ -24,7 +24,12 @@ export class GameBoard {
     let attackResult: Status = Status.miss;
     this.ships.forEach((ship) => {
       if (ship.isHit(x, y)) {
-        attackResult = ship.isKilled() ? Status.killed : Status.shot;
+        if (ship.isKilled()) {
+          attackResult = Status.killed;
+          this.markSurroundingCellsAsMisses(ship);
+        } else {
+          attackResult = Status.shot;
+        }
         this.hits.push({ x, y });
       }
     });
@@ -32,5 +37,34 @@ export class GameBoard {
       this.misses.push({ x, y });
     }
     return attackResult;
+  }
+
+  markSurroundingCellsAsMisses(ship: Ship) {
+    const directions = [
+      { dx: -1, dy: -1 },
+      { dx: 0, dy: -1 },
+      { dx: 1, dy: -1 },
+      { dx: -1, dy: 0 },
+      { dx: 1, dy: 0 },
+      { dx: -1, dy: 1 },
+      { dx: 0, dy: 1 },
+      { dx: 1, dy: 1 },
+    ];
+
+    for (let i = 0; i <= ship.length; i++) {
+      directions.forEach(({ dx, dy }) => {
+        const cellToCheck = ship.direction
+          ? { x: ship.position.x + i + dx, y: ship.position.y + dy }
+          : { x: ship.position.x + dx, y: ship.position.y + i + dy };
+
+        if (!this.isCellAlreadyMarked(cellToCheck)) {
+          this.misses.push(cellToCheck);
+        }
+      });
+    }
+  }
+
+  isCellAlreadyMarked(cell: { x: number; y: number }): boolean {
+    return this.hits.concat(this.misses).some((hitOrMiss) => hitOrMiss.x === cell.x && hitOrMiss.y === cell.y);
   }
 }
