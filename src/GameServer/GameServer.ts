@@ -183,7 +183,7 @@ export class GameServer {
         ws.send(response);
       }
 
-      const currentPlayer = { currentPlayer: room.currentPlayerIndex };
+      const currentPlayer = { currentPlayer: room.getCurrentPlayerIndex() };
 
       player.ws.send(
         JSON.stringify({
@@ -214,10 +214,12 @@ export class GameServer {
           }),
         );
 
+        const currentPlayer = { currentPlayer: gameRoom.getCurrentPlayerIndex() };
+
         player.ws.send(
           JSON.stringify({
             type: 'turn',
-            data: JSON.stringify(feedback.currentPlayer),
+            data: JSON.stringify(currentPlayer),
             id: 0,
           }),
         );

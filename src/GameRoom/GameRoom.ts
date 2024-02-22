@@ -11,11 +11,11 @@ export enum Type {
 }
 
 export class GameRoom {
+  private currentPlayerIndex: number;
   players: Player[] = [];
   roomId: string;
   gameStarted: boolean = false;
   gameCreated: boolean = false;
-  currentPlayerIndex: number;
   gameBoards: Map<number, GameBoard> = new Map();
 
   constructor() {
@@ -34,6 +34,10 @@ export class GameRoom {
       return true;
     }
     return false;
+  }
+
+  getCurrentPlayerIndex(): number {
+    return this.currentPlayerIndex;
   }
 
   isFull(): boolean {
