@@ -4,6 +4,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { Player } from '../Player/Player';
 import { GameRoom } from '../GameRoom/GameRoom';
 import { Ship } from 'src/Ship/Ship';
+import { Status } from 'src/GameBoard/GameBoard';
 
 export class GameServer {
   private wss: WebSocketServer;
@@ -202,17 +203,37 @@ export class GameServer {
       return;
     }
 
-    const feedback = gameRoom.handleAttack(x, y, indexPlayer);
+    const attackFeedback = gameRoom.handleAttack(x, y, indexPlayer);
 
-    if (feedback) {
+    if (attackFeedback) {
       gameRoom.players.forEach((player) => {
         player.ws.send(
           JSON.stringify({
             type: 'attack',
-            data: JSON.stringify(feedback),
+            data: JSON.stringify(attackFeedback.feedback),
             id: 0,
           }),
         );
+
+        if (attackFeedback.misses.length !== 0) {
+          attackFeedback.misses.forEach((pos) => {
+            const feed = {
+              position: {
+                x: pos.x,
+                y: pos.y,
+              },
+              status: Status.miss,
+              currentPlayer: indexPlayer,
+            };
+            player.ws.send(
+              JSON.stringify({
+                type: 'attack',
+                data: JSON.stringify(feed),
+                id: 0,
+              }),
+            );
+          });
+        }
 
         const currentPlayer = { currentPlayer: gameRoom.getCurrentPlayerIndex() };
         player.ws.send(

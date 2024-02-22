@@ -110,16 +110,34 @@ export class GameRoom {
       return;
     }
 
-    const attackFeedback = {
-      position: { x, y },
-      status: result,
-      currentPlayer: this.currentPlayerIndex,
-    };
+    if (result === Status.killed) {
+      const suroudingCells = this.gameBoards.get(opponentIndex)?.cellsAroundForKilledShip;
+      if (suroudingCells) {
+        const attackFeedbackKilled = {
+          misses: suroudingCells,
+          feedback: {
+            position: { x, y },
+            status: result,
+            currentPlayer: this.currentPlayerIndex,
+          },
+        };
+        return attackFeedbackKilled;
+      }
+    } else {
+      const attackFeedback = {
+        feedback: {
+          position: { x, y },
+          status: result,
+          currentPlayer: this.currentPlayerIndex,
+        },
+        misses: [],
+      };
 
-    if (result === Status.miss) {
-      this.currentPlayerIndex = opponentIndex;
+      if (result === Status.miss) {
+        this.currentPlayerIndex = opponentIndex;
+      }
+
+      return attackFeedback;
     }
-
-    return attackFeedback;
   }
 }
