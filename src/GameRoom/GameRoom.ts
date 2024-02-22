@@ -111,10 +111,14 @@ export class GameRoom {
       return;
     }
 
-    const attackResult = oponentBoard.processAttack(x, y);
+    const attackResult = oponentBoard.applyAttack(x, y);
     if (attackResult === undefined) {
       console.log('Failed to process attack.');
       return;
+    }
+
+    if (oponentBoard.isGameLost()) {
+      this.gameFinished = true;
     }
 
     if (attackResult === Status.killed) {

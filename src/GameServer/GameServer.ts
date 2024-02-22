@@ -59,7 +59,7 @@ export class GameServer {
       }
       case 'attack': {
         const { gameId, x, y, indexPlayer } = JSON.parse(messageObj.data);
-        this.passAttack(gameId, x, y, indexPlayer);
+        this.processAttack(gameId, x, y, indexPlayer);
         break;
       }
     }
@@ -196,7 +196,7 @@ export class GameServer {
     });
   }
 
-  private passAttack(gameId: string, x: number, y: number, indexPlayer: number) {
+  private processAttack(gameId: string, x: number, y: number, indexPlayer: number) {
     const gameRoom = this.gameRooms.get(gameId);
     if (!gameRoom) {
       console.log(`Game room not found for gameId: ${gameId}`);
@@ -233,6 +233,19 @@ export class GameServer {
               }),
             );
           });
+        }
+
+        if (gameRoom.gameFinished) {
+          const response = {
+            winPlayer: indexPlayer,
+          };
+          player.ws.send(
+            JSON.stringify({
+              type: 'finish',
+              data: JSON.stringify(response),
+              id: 0,
+            }),
+          );
         }
 
         const currentPlayer = { currentPlayer: gameRoom.getCurrentPlayerIndex() };
