@@ -16,6 +16,7 @@ export class GameRoom {
   roomId: string;
   gameStarted: boolean = false;
   gameCreated: boolean = false;
+  gameFinished: boolean = false;
   gameBoards: Map<number, GameBoard> = new Map();
 
   constructor() {
@@ -104,36 +105,39 @@ export class GameRoom {
       return;
     }
 
-    const result = this.gameBoards.get(opponentIndex)?.processAttack(x, y);
-    if (result === undefined) {
+    const oponentBoard = this.gameBoards.get(opponentIndex);
+    if (oponentBoard === undefined) {
+      console.log('Opponent board is undefined!');
+      return;
+    }
+
+    const attackResult = oponentBoard.processAttack(x, y);
+    if (attackResult === undefined) {
       console.log('Failed to process attack.');
       return;
     }
 
-    if (result === Status.killed) {
-      const suroudingCells = this.gameBoards.get(opponentIndex)?.cellsAroundForKilledShip;
-      if (suroudingCells) {
-        const attackFeedbackKilled = {
-          misses: suroudingCells,
-          feedback: {
-            position: { x, y },
-            status: result,
-            currentPlayer: this.currentPlayerIndex,
-          },
-        };
-        return attackFeedbackKilled;
-      }
+    if (attackResult === Status.killed) {
+      const attackFeedback = {
+        misses: oponentBoard.cellsAroundForKilledShip,
+        feedback: {
+          position: { x, y },
+          status: attackResult,
+          currentPlayer: this.currentPlayerIndex,
+        },
+      };
+      return attackFeedback;
     } else {
       const attackFeedback = {
         feedback: {
           position: { x, y },
-          status: result,
+          status: attackResult,
           currentPlayer: this.currentPlayerIndex,
         },
         misses: [],
       };
 
-      if (result === Status.miss) {
+      if (attackResult === Status.miss) {
         this.currentPlayerIndex = opponentIndex;
       }
 

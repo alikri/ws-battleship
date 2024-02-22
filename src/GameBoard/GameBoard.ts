@@ -28,7 +28,6 @@ export class GameBoard {
         if (ship.isKilled()) {
           attackResult = Status.killed;
           this.cellsAroundForKilledShip = ship.cellsAround;
-          console.log(this.cellsAroundForKilledShip, '- cellsaroundkilled ship');
         } else {
           attackResult = Status.shot;
         }
