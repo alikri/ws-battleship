@@ -17,6 +17,7 @@ import {
   WinnersData,
 } from 'src/types/responseDataTypes';
 import { Winners } from 'src/Winners/Winners';
+import { displayResultWithNoResponse } from 'src/utils/displayResult';
 
 export class GameServer {
   private wss: WebSocketServer;
@@ -37,6 +38,8 @@ export class GameServer {
     this.wss = new WebSocketServer({ server });
 
     this.wss.on('connection', (ws: WebSocket) => {
+      console.log(`New connection established. Number of connected clients: ${this.wss.clients.size}`);
+
       ws.on('message', (message: string) => {
         try {
           this.handleMessage(ws, message);
@@ -44,11 +47,14 @@ export class GameServer {
           console.error('Failed to parse message:', error);
         }
       });
+
+      ws.on('close', () => {
+        console.log(`Connection closed. Number of connected clients: ${this.wss.clients.size}`);
+      });
     });
 
     server.listen(port, () => {
       console.log(`Game server started on port ${port}`);
-      console.log(`Number of connected clients: ${this.wss.clients.size}`);
 
       process.on('SIGINT', () => this.shutdownServer());
       process.on('SIGTERM', () => this.shutdownServer());
@@ -117,7 +123,14 @@ export class GameServer {
     }
 
     const newRoom = new GameRoom((this.newGameRoomId += 1));
+
     newRoom.addPlayer(player);
+
+    displayResultWithNoResponse<CreateGameData>('create_room', {
+      idGame: newRoom.roomId,
+      idPlayer: player.index,
+    });
+
     this.gameRooms.set(newRoom.roomId, newRoom);
     this.updateAvailableRooms();
   }
@@ -126,12 +139,16 @@ export class GameServer {
     const room = this.gameRooms.get(roomId);
     const player = this.players.get(ws);
 
-    if (player && room) {
+    if (player && room && !room.containsPlayer(player)) {
       room.addPlayer(player);
+      displayResultWithNoResponse<number>('add_user_to_room', player.index);
       if (room.gameCreated) {
         this.notifyPlayersGameCreated(room);
       }
+    } else if (player && room && room.containsPlayer(player)) {
+      console.log(`Player ${player.name} is already in room ${roomId}, cannot join again.`);
     }
+
     if (room && room.isFull()) {
       this.updateAvailableRooms();
     }
@@ -158,6 +175,7 @@ export class GameServer {
     if (gameRoom) {
       gameRoom.handleShipsSubmission(indexPlayer, shipsData);
       if (gameRoom.gameStarted) {
+        displayResultWithNoResponse<string>('add_ships', 'Ships added to both players');
         this.notifyPlayersGameStarted(gameRoom);
       }
     } else {

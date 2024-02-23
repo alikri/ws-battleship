@@ -43,6 +43,10 @@ export class GameRoom {
     return this.players.length === 2;
   }
 
+  containsPlayer(player: Player): boolean {
+    return this.players.some((p) => p.index === player.index);
+  }
+
   handleShipsSubmission(playerIndex: number, shipsData: Ship[]) {
     const gameBoard = this.gameBoards.get(playerIndex);
 
