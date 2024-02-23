@@ -2,20 +2,19 @@ import { Player } from '../Player/Player';
 import { GameBoard } from 'src/GameBoard/GameBoard';
 import { Ship } from 'src/Ship/Ship';
 import { ShipData } from 'src/types/types';
-import { generateRandomId } from 'src/utils/generateRandomId';
 import { Status } from 'src/types/enums';
 
 export class GameRoom {
   private currentPlayerIndex: number;
   players: Player[] = [];
-  roomId: string;
+  roomId: number;
   gameStarted: boolean = false;
   gameCreated: boolean = false;
   gameFinished: boolean = false;
   gameBoards: Map<number, GameBoard> = new Map();
 
-  constructor() {
-    this.roomId = generateRandomId();
+  constructor(roomId: number) {
+    this.roomId = roomId;
   }
 
   addPlayer(player: Player): boolean {

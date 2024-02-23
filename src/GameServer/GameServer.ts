@@ -12,20 +12,24 @@ import {
   PlayerTurnData,
   FinishGameData,
   AttackFeedbackData,
+  UpdateRoomData,
+  CreateGameData,
 } from 'src/types/responseDataTypes';
 
 export class GameServer {
   private wss: WebSocketServer;
   private players: Map<WebSocket, Player>;
-  private gameRooms: Map<string, GameRoom>;
+  private gameRooms: Map<number, GameRoom>;
+  private newGameRoomId: number;
 
   constructor(port: number) {
     this.players = new Map<WebSocket, Player>();
-    this.gameRooms = new Map<string, GameRoom>();
+    this.gameRooms = new Map<number, GameRoom>();
     const server = http.createServer((_, res) => {
       res.writeHead(404);
       res.end();
     });
+    this.newGameRoomId = 0;
 
     this.wss = new WebSocketServer({ server });
 
@@ -95,14 +99,13 @@ export class GameServer {
       return;
     }
 
-    const newRoom = new GameRoom();
-
+    const newRoom = new GameRoom((this.newGameRoomId += 1));
     newRoom.addPlayer(player);
     this.gameRooms.set(newRoom.roomId, newRoom);
     this.updateAvailableRooms();
   }
 
-  private addPlayerToRoom(ws: WebSocket, roomId: string) {
+  private addPlayerToRoom(ws: WebSocket, roomId: number) {
     const room = this.gameRooms.get(roomId);
     const player = this.players.get(ws);
 
@@ -129,17 +132,11 @@ export class GameServer {
       }));
 
     this.wss.clients.forEach((client) => {
-      client.send(
-        JSON.stringify({
-          type: 'update_room',
-          data: JSON.stringify(roomsData),
-          id: 0,
-        }),
-      );
+      sendWebSocketMessage<UpdateRoomData[]>(client, 'update_room', roomsData);
     });
   }
 
-  private addShips(gameId: string, shipsData: Ship[], indexPlayer: number) {
+  private addShips(gameId: number, shipsData: Ship[], indexPlayer: number) {
     const gameRoom = this.gameRooms.get(gameId);
     if (gameRoom) {
       gameRoom.handleShipsSubmission(indexPlayer, shipsData);
@@ -159,13 +156,7 @@ export class GameServer {
         idPlayer: player.index,
       };
       if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(
-          JSON.stringify({
-            type: 'create_game',
-            data: JSON.stringify(responseData),
-            id: 0,
-          }),
-        );
+        sendWebSocketMessage<CreateGameData>(ws, 'create_game', responseData);
       }
     });
   }
@@ -189,7 +180,7 @@ export class GameServer {
     });
   }
 
-  private processAttack(gameId: string, x: number, y: number, indexPlayer: number) {
+  private processAttack(gameId: number, x: number, y: number, indexPlayer: number) {
     const gameRoom = this.gameRooms.get(gameId);
     if (!gameRoom) {
       console.log(`Game room not found for gameId: ${gameId}`);
