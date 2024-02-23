@@ -48,6 +48,20 @@ export class GameServer {
 
     server.listen(port, () => {
       console.log(`Game server started on port ${port}`);
+      console.log(`Number of connected clients: ${this.wss.clients.size}`);
+
+      process.on('SIGINT', () => this.shutdownServer());
+      process.on('SIGTERM', () => this.shutdownServer());
+    });
+  }
+
+  private shutdownServer() {
+    this.wss.clients.forEach((client) => {
+      client.close(1000, 'Server shutdown');
+    });
+    this.wss.close(() => {
+      console.log('WebSocket server closed.');
+      process.exit(0);
     });
   }
 
