@@ -136,7 +136,6 @@ export class GameServer {
 
     this.wss.clients.forEach((client) => {
       sendWebSocketMessage<UpdateRoomData[]>(client, 'update_room', roomsData);
-      this.broadcastWinners();
     });
   }
 
@@ -217,6 +216,7 @@ export class GameServer {
             winPlayer: indexPlayer,
           };
           sendWebSocketMessage<FinishGameData>(player.ws, 'finish', response);
+          this.gameRooms.clear();
           return;
         }
 

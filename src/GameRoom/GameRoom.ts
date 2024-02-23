@@ -14,6 +14,7 @@ export class GameRoom {
   gameFinished: boolean = false;
   gameBoards: Map<number, GameBoard> = new Map();
   winner: Player;
+  roomAvailable = true;
 
   constructor(roomId: number) {
     this.roomId = roomId;
@@ -25,6 +26,7 @@ export class GameRoom {
       this.gameBoards.set(player.index, new GameBoard());
       if (this.players.length === 2) {
         this.gameCreated = true;
+        this.roomAvailable = false;
       } else if (this.players.length === 1) {
         this.currentPlayerIndex = player.index;
       }
