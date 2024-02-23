@@ -165,8 +165,8 @@ export class GameServer {
         })),
       }));
 
-    this.wss.clients.forEach((client) => {
-      sendWebSocketMessage<UpdateRoomData[]>(client, 'update_room', roomsData);
+    this.players.forEach((player) => {
+      sendWebSocketMessage<UpdateRoomData[]>(player.ws, 'update_room', roomsData);
     });
   }
 
