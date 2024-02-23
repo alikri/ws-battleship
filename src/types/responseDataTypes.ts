@@ -12,7 +12,7 @@ export interface UpdateRoomData {
   roomUsers: Users[];
 }
 
-export interface UpdateWinnersData {
+export interface WinnersData {
   name: string;
   wins: number;
 }

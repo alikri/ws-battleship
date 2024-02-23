@@ -14,13 +14,16 @@ import {
   AttackFeedbackData,
   UpdateRoomData,
   CreateGameData,
+  WinnersData,
 } from 'src/types/responseDataTypes';
+import { Winners } from 'src/Winners/Winners';
 
 export class GameServer {
   private wss: WebSocketServer;
   private players: Map<WebSocket, Player>;
   private gameRooms: Map<number, GameRoom>;
   private newGameRoomId: number;
+  static winners = new Winners();
 
   constructor(port: number) {
     this.players = new Map<WebSocket, Player>();
@@ -133,6 +136,7 @@ export class GameServer {
 
     this.wss.clients.forEach((client) => {
       sendWebSocketMessage<UpdateRoomData[]>(client, 'update_room', roomsData);
+      this.broadcastWinners();
     });
   }
 
@@ -208,15 +212,26 @@ export class GameServer {
         }
 
         if (gameRoom.gameFinished) {
+          this.broadcastWinners();
           const response = {
             winPlayer: indexPlayer,
           };
           sendWebSocketMessage<FinishGameData>(player.ws, 'finish', response);
+          return;
         }
 
         const currentPlayer = { currentPlayer: gameRoom.getCurrentPlayerIndex() };
         sendWebSocketMessage<PlayerTurnData>(player.ws, 'turn', currentPlayer);
       });
     }
+  }
+
+  private broadcastWinners(): void {
+    const currentWinners = GameServer.winners.getWinnersResponseData();
+    this.wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        sendWebSocketMessage<WinnersData[]>(client, 'update_winners', currentWinners);
+      }
+    });
   }
 }

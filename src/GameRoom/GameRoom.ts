@@ -3,6 +3,7 @@ import { GameBoard } from 'src/GameBoard/GameBoard';
 import { Ship } from 'src/Ship/Ship';
 import { ShipData } from 'src/types/types';
 import { Status } from 'src/types/enums';
+import { GameServer } from 'src/GameServer/GameServer';
 
 export class GameRoom {
   private currentPlayerIndex: number;
@@ -12,6 +13,7 @@ export class GameRoom {
   gameCreated: boolean = false;
   gameFinished: boolean = false;
   gameBoards: Map<number, GameBoard> = new Map();
+  winner: Player;
 
   constructor(roomId: number) {
     this.roomId = roomId;
@@ -104,6 +106,11 @@ export class GameRoom {
 
     if (oponentBoard.isGameLost()) {
       this.gameFinished = true;
+      const newWinner = this.players.find((player) => player.index === attackerIndex);
+      if (newWinner) {
+        this.winner = newWinner;
+        this.updateWinner(newWinner.name);
+      }
     }
 
     if (attackResult === Status.killed) {
@@ -132,5 +139,9 @@ export class GameRoom {
 
       return attackFeedback;
     }
+  }
+
+  updateWinner(winnerName: string): void {
+    GameServer.winners.addOrUpdateWinner(winnerName);
   }
 }

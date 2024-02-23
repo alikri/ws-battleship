@@ -22,3 +22,9 @@ export interface Users {
   name: string;
   index: number;
 }
+
+export interface WinnerInternal {
+  index: number;
+  name: string;
+  wins: number;
+}
