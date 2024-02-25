@@ -97,6 +97,11 @@ export class GameServer {
         this.processAttack(gameId, x, y, indexPlayer);
         break;
       }
+      case 'randomAttack': {
+        const { gameId, indexPlayer } = JSON.parse(messageObj.data);
+        this.processRandomAttack(gameId, indexPlayer);
+        break;
+      }
     }
   }
 
@@ -223,6 +228,49 @@ export class GameServer {
     }
 
     const attackFeedback = gameRoom.handleAttack(x, y, indexPlayer);
+
+    if (attackFeedback) {
+      gameRoom.players.forEach((player) => {
+        sendWebSocketMessage<AttackFeedbackData>(player.ws, 'attack', attackFeedback.feedback);
+
+        if (attackFeedback.misses.length !== 0) {
+          attackFeedback.misses.forEach((pos) => {
+            const response = {
+              position: {
+                x: pos.x,
+                y: pos.y,
+              },
+              status: Status.miss,
+              currentPlayer: indexPlayer,
+            };
+            sendWebSocketMessage<AttackFeedbackData>(player.ws, 'attack', response);
+          });
+        }
+
+        if (gameRoom.gameFinished) {
+          this.broadcastWinners();
+          const response = {
+            winPlayer: indexPlayer,
+          };
+          sendWebSocketMessage<FinishGameData>(player.ws, 'finish', response);
+          this.gameRooms.clear();
+          return;
+        }
+
+        const currentPlayer = { currentPlayer: gameRoom.getCurrentPlayerIndex() };
+        sendWebSocketMessage<PlayerTurnData>(player.ws, 'turn', currentPlayer);
+      });
+    }
+  }
+
+  private processRandomAttack(gameId: number, indexPlayer: number) {
+    const gameRoom = this.gameRooms.get(gameId);
+    if (!gameRoom) {
+      console.log(`Game room not found for gameId: ${gameId}`);
+      return;
+    }
+
+    const attackFeedback = gameRoom.handleRandomAttack(indexPlayer);
 
     if (attackFeedback) {
       gameRoom.players.forEach((player) => {

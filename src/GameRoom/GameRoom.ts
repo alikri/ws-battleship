@@ -4,6 +4,7 @@ import { Ship } from 'src/Ship/Ship';
 import { ShipData } from 'src/types/types';
 import { Status } from 'src/types/enums';
 import { GameServer } from 'src/GameServer/GameServer';
+import { getRandomCoordinate } from 'src/utils/getRandomCoordinate';
 
 export class GameRoom {
   private currentPlayerIndex: number;
@@ -145,6 +146,41 @@ export class GameRoom {
 
       return attackFeedback;
     }
+  }
+
+  handleRandomAttack(attackerIndex: number) {
+    const opponentIndex = this.players.findIndex((player) => player.index !== attackerIndex);
+    if (opponentIndex === -1) {
+      console.log('Opponent not found.');
+      return;
+    }
+
+    const opponentBoard = this.gameBoards.get(opponentIndex);
+    if (!opponentBoard) {
+      console.log("Opponent's game board not found.");
+      return;
+    }
+
+    const { x, y } = this.generateValidAttackCoordinates(opponentBoard);
+
+    return this.handleAttack(x, y, attackerIndex);
+  }
+
+  generateValidAttackCoordinates(opponentBoard: GameBoard): { x: number; y: number } {
+    let isValidAttack = false;
+    let x = 0;
+    let y = 0;
+
+    while (!isValidAttack) {
+      x = getRandomCoordinate();
+      y = getRandomCoordinate();
+
+      isValidAttack =
+        !opponentBoard.hits.some((pos) => pos.x === x && pos.y === y) &&
+        !opponentBoard.misses.some((pos) => pos.x === x && pos.y === y);
+    }
+
+    return { x, y };
   }
 
   updateWinner(winnerName: string): void {
