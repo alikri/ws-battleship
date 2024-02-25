@@ -5,6 +5,7 @@ export class Player {
   password: string;
   index: number;
   ws: WebSocket;
+  currentlyInRoomId: number | null = null;
 
   constructor(name: string, password: string, ws: WebSocket, index: number) {
     this.password = password;

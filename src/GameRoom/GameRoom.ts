@@ -24,6 +24,7 @@ export class GameRoom {
   addPlayer(player: Player): boolean {
     if (this.players.length < 2) {
       this.players.push(player);
+      player.currentlyInRoomId = this.roomId;
       this.gameBoards.set(player.index, new GameBoard());
       if (this.players.length === 2) {
         this.gameCreated = true;

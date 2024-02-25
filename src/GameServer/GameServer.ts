@@ -156,22 +156,30 @@ export class GameServer {
   }
 
   private addPlayerToRoom(ws: WebSocket, roomId: number) {
-    const room = this.gameRooms.get(roomId);
     const player = this.players.get(ws);
+    if (!player) {
+      console.error('Player not found');
+      return;
+    }
 
-    if (player && room && !room.containsPlayer(player)) {
+    if (player.currentlyInRoomId !== null && player.currentlyInRoomId !== roomId) {
+      this.gameRooms.delete(player.currentlyInRoomId);
+      player.currentlyInRoomId = roomId;
+    }
+
+    const room = this.gameRooms.get(roomId);
+    if (room && !room.containsPlayer(player)) {
       room.addPlayer(player);
+      player.currentlyInRoomId = roomId;
       displayReslutForIncommingMessages<number>('add_user_to_room', player.index);
       if (room.gameCreated) {
         this.notifyPlayersGameCreated(room);
       }
-    } else if (player && room && room.containsPlayer(player)) {
-      console.log(`Player ${player.name} is already in room ${roomId}, cannot join again.`);
+    } else {
+      console.log(`Player ${player.name} is already in room ${roomId} or room does not exist.`);
     }
 
-    if (room && room.isFull()) {
-      this.updateAvailableRooms();
-    }
+    this.updateAvailableRooms();
   }
 
   private updateAvailableRooms() {
