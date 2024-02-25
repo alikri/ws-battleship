@@ -4,9 +4,10 @@ export const displayResponseResult = <T>(type: string, data: T): void => {
   console.log(`Send message to client - Type: "${type}", Data: ${JSON.stringify(data)}`);
 };
 
-export const displayResultWithNoResponse = <T>(command: string, data: T): void => {
+export const displayReslutForIncommingMessages = <T>(command: string, data: T): void => {
   switch (command) {
-    case 'reg':
+    case 'randomAttack':
+      console.log(`Process incoming message: "${command}". Result: Random attack is processing..`);
       break;
     case 'create_room':
       const addUserData = data as CreateGameData;

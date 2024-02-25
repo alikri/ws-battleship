@@ -17,7 +17,8 @@ import {
   WinnersData,
 } from 'src/types/responseDataTypes';
 import { Winners } from 'src/Winners/Winners';
-import { displayResultWithNoResponse } from 'src/utils/displayResult';
+import { displayReslutForIncommingMessages } from 'src/utils/displayResult';
+import { AttackFeedback, Position } from 'src/types/types';
 
 export class GameServer {
   private wss: WebSocketServer;
@@ -131,7 +132,7 @@ export class GameServer {
 
     newRoom.addPlayer(player);
 
-    displayResultWithNoResponse<CreateGameData>('create_room', {
+    displayReslutForIncommingMessages<CreateGameData>('create_room', {
       idGame: newRoom.roomId,
       idPlayer: player.index,
     });
@@ -146,7 +147,7 @@ export class GameServer {
 
     if (player && room && !room.containsPlayer(player)) {
       room.addPlayer(player);
-      displayResultWithNoResponse<number>('add_user_to_room', player.index);
+      displayReslutForIncommingMessages<number>('add_user_to_room', player.index);
       if (room.gameCreated) {
         this.notifyPlayersGameCreated(room);
       }
@@ -180,7 +181,7 @@ export class GameServer {
     if (gameRoom) {
       gameRoom.handleShipsSubmission(indexPlayer, shipsData);
       if (gameRoom.gameStarted) {
-        displayResultWithNoResponse<string>('add_ships', 'Ships added to both players');
+        displayReslutForIncommingMessages<string>('add_ships', 'Ships added to both players');
         this.notifyPlayersGameStarted(gameRoom);
       }
     } else {
@@ -269,15 +270,18 @@ export class GameServer {
       console.log(`Game room not found for gameId: ${gameId}`);
       return;
     }
-
     const attackFeedback = gameRoom.handleRandomAttack(indexPlayer);
+    displayReslutForIncommingMessages('randomAttack', '');
+    this.sendAttackFeedback(attackFeedback, gameRoom, indexPlayer);
+  }
 
+  private sendAttackFeedback(attackFeedback: AttackFeedback, gameRoom: GameRoom, indexPlayer: number) {
     if (attackFeedback) {
-      gameRoom.players.forEach((player) => {
+      gameRoom.players.forEach((player: Player) => {
         sendWebSocketMessage<AttackFeedbackData>(player.ws, 'attack', attackFeedback.feedback);
 
         if (attackFeedback.misses.length !== 0) {
-          attackFeedback.misses.forEach((pos) => {
+          attackFeedback.misses.forEach((pos: Position) => {
             const response = {
               position: {
                 x: pos.x,

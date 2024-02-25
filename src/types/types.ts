@@ -1,4 +1,5 @@
-import { ShipType } from './enums';
+import { ShipType, Status } from './enums';
+import { AttackFeedbackData } from './responseDataTypes';
 
 export interface WebSocketMessage<T> {
   type: string;
@@ -28,3 +29,15 @@ export interface WinnerInternal {
   name: string;
   wins: number;
 }
+
+export interface AttackFeedbackKilled {
+  feedback: AttackFeedbackData & { status: Status.killed };
+  misses: Position[];
+}
+
+interface AttackFeedbackMissOrShot {
+  feedback: AttackFeedbackData & { status: Status.miss | Status.shot };
+  misses: never[];
+}
+
+export type AttackFeedback = AttackFeedbackKilled | AttackFeedbackMissOrShot | undefined;
