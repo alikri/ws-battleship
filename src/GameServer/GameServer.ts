@@ -26,6 +26,7 @@ export class GameServer {
   private gameRooms: Map<number, GameRoom>;
   private newGameRoomId: number;
   static winners = new Winners();
+  private playersByName = new Map<string, Player>();
 
   constructor(port: number) {
     this.players = new Map<WebSocket, Player>();
@@ -107,9 +108,22 @@ export class GameServer {
   }
 
   private registerPlayer(ws: WebSocket, data: { name: string; password: string }) {
+    if (this.playersByName.has(data.name)) {
+      const errorResponseData = {
+        name: data.name,
+        index: null,
+        error: true,
+        errorText: 'Player already exists.',
+      };
+
+      sendWebSocketMessage<RegistrationData>(ws, 'reg', errorResponseData);
+      return;
+    }
+
     const playerIndex = this.players.size;
     const player = new Player(data.name, data.password, ws, playerIndex);
     this.players.set(ws, player);
+    this.playersByName.set(data.name, player);
 
     const responseData = {
       name: data.name,

@@ -2,7 +2,7 @@ import { Position, ShipData, Users } from './types';
 
 export interface RegistrationData {
   name: string;
-  index: number;
+  index: number | null;
   error: boolean;
   errorText: string;
 }
