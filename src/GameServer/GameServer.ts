@@ -230,38 +230,7 @@ export class GameServer {
 
     const attackFeedback = gameRoom.handleAttack(x, y, indexPlayer);
 
-    if (attackFeedback) {
-      gameRoom.players.forEach((player) => {
-        sendWebSocketMessage<AttackFeedbackData>(player.ws, 'attack', attackFeedback.feedback);
-
-        if (attackFeedback.misses.length !== 0) {
-          attackFeedback.misses.forEach((pos) => {
-            const response = {
-              position: {
-                x: pos.x,
-                y: pos.y,
-              },
-              status: Status.miss,
-              currentPlayer: indexPlayer,
-            };
-            sendWebSocketMessage<AttackFeedbackData>(player.ws, 'attack', response);
-          });
-        }
-
-        if (gameRoom.gameFinished) {
-          this.broadcastWinners();
-          const response = {
-            winPlayer: indexPlayer,
-          };
-          sendWebSocketMessage<FinishGameData>(player.ws, 'finish', response);
-          this.gameRooms.clear();
-          return;
-        }
-
-        const currentPlayer = { currentPlayer: gameRoom.getCurrentPlayerIndex() };
-        sendWebSocketMessage<PlayerTurnData>(player.ws, 'turn', currentPlayer);
-      });
-    }
+    this.sendAttackFeedback(attackFeedback, gameRoom, indexPlayer);
   }
 
   private processRandomAttack(gameId: number, indexPlayer: number) {
