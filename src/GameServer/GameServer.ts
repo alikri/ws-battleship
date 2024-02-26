@@ -80,7 +80,7 @@ export class GameServer {
       case 'reg':
         const { data } = messageObj;
         const dataObj = JSON.parse(data);
-        this.registerPlayer(ws, dataObj);
+        this.registerOrLoginUser(ws, dataObj);
         break;
       case 'create_room':
         this.createRoom(ws);
@@ -107,16 +107,25 @@ export class GameServer {
     }
   }
 
-  private registerPlayer(ws: WebSocket, data: { name: string; password: string }) {
+  private registerOrLoginUser(ws: WebSocket, data: { name: string; password: string }) {
     if (this.playersByName.has(data.name)) {
-      const errorResponseData = {
-        name: data.name,
-        index: null,
-        error: true,
-        errorText: 'Player already exists.',
-      };
+      const existingPlayer = this.playersByName.get(data.name);
+      if (existingPlayer) {
+        existingPlayer.updatePassword(data.password);
+        existingPlayer.updateWebSocket(ws);
 
-      sendWebSocketMessage<RegistrationData>(ws, 'reg', errorResponseData);
+        this.players.set(ws, existingPlayer);
+
+        const successResponseData = {
+          name: data.name,
+          index: existingPlayer.index,
+          error: false,
+          errorText: '',
+        };
+
+        sendWebSocketMessage<RegistrationData>(ws, 'reg', successResponseData);
+        this.updateAvailableRooms();
+      }
       return;
     }
 
@@ -133,6 +142,7 @@ export class GameServer {
     };
 
     sendWebSocketMessage<RegistrationData>(ws, 'reg', responseData);
+    this.updateAvailableRooms();
   }
 
   private createRoom(ws: WebSocket) {

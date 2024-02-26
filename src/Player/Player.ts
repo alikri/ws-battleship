@@ -13,4 +13,12 @@ export class Player {
     this.index = index;
     this.ws = ws;
   }
+
+  updatePassword(newPassword: string) {
+    this.password = newPassword;
+  }
+
+  updateWebSocket(newWebSocket: WebSocket) {
+    this.ws = newWebSocket;
+  }
 }
