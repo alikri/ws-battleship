@@ -128,7 +128,8 @@ export class GameRoom {
           status: attackResult,
           currentPlayer: this.currentPlayerIndex,
         },
-        misses: oponentBoard.cellsAroundForKilledShip,
+        killedShipPositions: oponentBoard.getKilledShipPositions(),
+        cellsAround: oponentBoard.cellsAroundForKilledShip,
       };
       return attackFeedback;
     } else {
@@ -138,7 +139,8 @@ export class GameRoom {
           status: attackResult,
           currentPlayer: this.currentPlayerIndex,
         },
-        misses: [],
+        killedShipPositions: null,
+        cellsAround: [],
       };
 
       if (attackResult === Status.miss) {

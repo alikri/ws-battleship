@@ -7,6 +7,7 @@ export class GameBoard {
   misses: { x: number; y: number }[] = [];
   shipsKilled: number = 0;
   cellsAroundForKilledShip: { x: number; y: number }[] = [];
+  currentKilledShip: Ship | null = null;
 
   addShip(ship: Ship) {
     this.ships.push(ship);
@@ -24,6 +25,7 @@ export class GameBoard {
           attackResult = Status.killed;
           this.cellsAroundForKilledShip = ship.cellsAround;
           this.shipsKilled += 1;
+          this.currentKilledShip = ship;
         } else {
           attackResult = Status.shot;
         }
@@ -34,6 +36,15 @@ export class GameBoard {
       this.misses.push({ x, y });
     }
     return attackResult;
+  }
+
+  getKilledShipPositions() {
+    const currentShipKilledPositions = this.currentKilledShip?.hitPositions;
+    this.currentKilledShip = null;
+    if (currentShipKilledPositions) {
+      return currentShipKilledPositions;
+    }
+    return null;
   }
 
   isGameLost() {

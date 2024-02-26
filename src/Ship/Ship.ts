@@ -9,8 +9,10 @@ export class Ship {
   hits: number;
   occupiedCells: Position[];
   cellsAround: Position[];
+  hitPositions: Position[];
 
   constructor(position: Position, direction: boolean, length: number, type: ShipType) {
+    this.hitPositions = [];
     this.position = position;
     this.direction = direction;
     this.length = length;
@@ -34,6 +36,7 @@ export class Ship {
     const hitCell = this.occupiedCells.find((cell) => cell.x === x && cell.y === y);
     if (hitCell) {
       this.hits++;
+      this.hitPositions.push({ x, y });
       return true;
     }
     return false;

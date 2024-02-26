@@ -32,12 +32,14 @@ export interface WinnerInternal {
 
 export interface AttackFeedbackKilled {
   feedback: AttackFeedbackData & { status: Status.killed };
-  misses: Position[];
+  killedShipPositions: Position[] | null | undefined;
+  cellsAround: Position[];
 }
 
 interface AttackFeedbackMissOrShot {
   feedback: AttackFeedbackData & { status: Status.miss | Status.shot };
-  misses: never[];
+  killedShipPositions: Position[] | null | undefined;
+  cellsAround: never[];
 }
 
 export type AttackFeedback = AttackFeedbackKilled | AttackFeedbackMissOrShot | undefined;

@@ -271,14 +271,32 @@ export class GameServer {
       gameRoom.players.forEach((player: Player) => {
         sendWebSocketMessage<AttackFeedbackData>(player.ws, 'attack', attackFeedback.feedback);
 
-        if (attackFeedback.misses.length !== 0) {
-          attackFeedback.misses.forEach((pos: Position) => {
+        if (attackFeedback.cellsAround.length !== 0) {
+          attackFeedback.cellsAround.forEach((pos: Position) => {
             const response = {
               position: {
                 x: pos.x,
                 y: pos.y,
               },
               status: Status.miss,
+              currentPlayer: indexPlayer,
+            };
+            sendWebSocketMessage<AttackFeedbackData>(player.ws, 'attack', response);
+          });
+        }
+
+        if (
+          attackFeedback.feedback.status === Status.killed &&
+          attackFeedback.killedShipPositions &&
+          attackFeedback.killedShipPositions.length > 1
+        ) {
+          attackFeedback.killedShipPositions.forEach((pos: Position) => {
+            const response = {
+              position: {
+                x: pos.x,
+                y: pos.y,
+              },
+              status: Status.killed,
               currentPlayer: indexPlayer,
             };
             sendWebSocketMessage<AttackFeedbackData>(player.ws, 'attack', response);
