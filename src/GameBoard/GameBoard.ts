@@ -49,7 +49,6 @@ export class GameBoard {
     if (attackResult === Status.miss) {
       this.misses.push({ x, y });
     }
-    console.log(this.shipsKilled, 'SHIPS KILLED!!!!!');
     return attackResult;
   }
 
