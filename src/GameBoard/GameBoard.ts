@@ -18,23 +18,38 @@ export class GameBoard {
   }
 
   applyAttack(x: number, y: number): Status {
+    const cellProcessed =
+      this.hits.some((hit) => hit.x === x && hit.y === y) || this.misses.some((miss) => miss.x === x && miss.y === y);
+    if (cellProcessed) {
+      console.log(`Attack at (${x}, ${y}) is on an already processed cell.`);
+    }
     let attackResult: Status = Status.miss;
     this.ships.forEach((ship) => {
       if (ship.isHit(x, y)) {
+        if (!cellProcessed) {
+          this.hits.push({ x, y });
+        }
         if (ship.isKilled()) {
+          if (!cellProcessed) {
+            this.cellsAroundForKilledShip = ship.cellsAround.filter(
+              (cell) =>
+                !this.hits.some((hit) => hit.x === cell.x && hit.y === cell.y) &&
+                !this.misses.some((miss) => miss.x === cell.x && miss.y === cell.y),
+            );
+            this.cellsAroundForKilledShip = ship.cellsAround;
+            this.shipsKilled += 1;
+            this.currentKilledShip = ship;
+          }
           attackResult = Status.killed;
-          this.cellsAroundForKilledShip = ship.cellsAround;
-          this.shipsKilled += 1;
-          this.currentKilledShip = ship;
         } else {
           attackResult = Status.shot;
         }
-        this.hits.push({ x, y });
       }
     });
     if (attackResult === Status.miss) {
       this.misses.push({ x, y });
     }
+    console.log(this.shipsKilled, 'SHIPS KILLED!!!!!');
     return attackResult;
   }
 
