@@ -21,7 +21,7 @@ export class GameBoard {
     const cellProcessed =
       this.hits.some((hit) => hit.x === x && hit.y === y) || this.misses.some((miss) => miss.x === x && miss.y === y);
     if (cellProcessed) {
-      console.log(`Attack at (${x}, ${y}) is on an already processed cell.`);
+      console.log(`Cell: (${x}, ${y}) is already processed.`);
     }
     let attackResult: Status = Status.miss;
     this.ships.forEach((ship) => {
